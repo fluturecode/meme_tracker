@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { ThemeProvider } from 'styled-components';
 import { Plus, Trash2, Moon, Sun } from 'lucide-react';
+import { lightTheme, darkTheme } from '../theme';
 
 const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  background-color: ${(props) => props.theme.backgroundColor};
+  color: ${(props) => props.theme.textColor};
 `;
 
 const Header = styled.div`
@@ -62,7 +65,7 @@ const Input = styled.input`
   border-radius: 4px;
 `;
 
-const Button = styled.button`
+const Button = styled.button<{ variant?: 'destructive' }>`
   background-color: ${(props) =>
     props.variant === 'destructive' ? '#ff4d4f' : '#1890ff'};
   color: white;
@@ -75,7 +78,31 @@ const Button = styled.button`
   justify-content: center;
 `;
 
-const TokenModule = ({ date, onDelete, onUpdate, data }) => {
+interface TokenData {
+  checklist: {
+    noMint: boolean;
+    notFreezable: boolean;
+    burn: boolean;
+    oneSocial: boolean;
+  };
+  tokenName: string;
+  investmentAmount: string;
+  pnl: string;
+}
+
+interface TokenModuleProps {
+  date: string;
+  onDelete: () => void;
+  onUpdate: (data: TokenData) => void;
+  data: TokenData;
+}
+
+const TokenModule: React.FC<TokenModuleProps> = ({
+  date,
+  onDelete,
+  onUpdate,
+  data,
+}) => {
   const [checklist, setChecklist] = useState(
     data.checklist || {
       noMint: false,
@@ -90,26 +117,32 @@ const TokenModule = ({ date, onDelete, onUpdate, data }) => {
   );
   const [pnl, setPnl] = useState(data.pnl || '');
 
-  const handleChecklistChange = (item) => {
+  const handleChecklistChange = (item: keyof typeof checklist) => {
     const newChecklist = { ...checklist, [item]: !checklist[item] };
     setChecklist(newChecklist);
     onUpdate({ checklist: newChecklist, tokenName, investmentAmount, pnl });
   };
 
-  const handleInputChange = (setter) => (e) => {
-    setter(e.target.value);
-    onUpdate({
-      checklist,
-      tokenName,
-      investmentAmount,
-      pnl,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const handleInputChange =
+    (setter: React.Dispatch<React.SetStateAction<string>>) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setter(e.target.value);
+      onUpdate({
+        checklist,
+        tokenName,
+        investmentAmount,
+        pnl,
+        [e.target.name]: e.target.value,
+      });
+    };
 
-  const formatDate = (date) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(date).toLocaleDateString(undefined, options);
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    };
+    return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
   return (
@@ -121,7 +154,9 @@ const TokenModule = ({ date, onDelete, onUpdate, data }) => {
             <input
               type='checkbox'
               checked={value}
-              onChange={() => handleChecklistChange(key)}
+              onChange={() =>
+                handleChecklistChange(key as keyof typeof checklist)
+              }
               id={key}
             />
             <label htmlFor={key}>{key}</label>
@@ -155,16 +190,18 @@ const TokenModule = ({ date, onDelete, onUpdate, data }) => {
   );
 };
 
-const MemeTokenTracker = () => {
-  const [modules, setModules] = useState([]);
-  const [theme, setTheme] = useState('light');
+const MemeTokenTracker: React.FC = () => {
+  const [modules, setModules] = useState<
+    Array<{ id: number; date: string; data: TokenData }>
+  >([]);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
     const savedModules = localStorage.getItem('memeTokenModules');
     if (savedModules) {
       setModules(JSON.parse(savedModules));
     }
-    const savedTheme = localStorage.getItem('theme');
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
     if (savedTheme) {
       setTheme(savedTheme);
     }
@@ -183,16 +220,16 @@ const MemeTokenTracker = () => {
     const newModule = {
       id: Date.now(),
       date: new Date().toISOString(),
-      data: {},
+      data: {} as TokenData,
     };
     setModules([...modules, newModule]);
   };
 
-  const deleteModule = (id) => {
+  const deleteModule = (id: number) => {
     setModules(modules.filter((module) => module.id !== id));
   };
 
-  const updateModule = (id, newData) => {
+  const updateModule = (id: number, newData: TokenData) => {
     setModules(
       modules.map((module) =>
         module.id === id ? { ...module, data: newData } : module
@@ -205,30 +242,32 @@ const MemeTokenTracker = () => {
   };
 
   return (
-    <Container>
-      <Header>
-        <Title>Meme Token Investment Tracker</Title>
-        <ThemeToggle>
-          <Sun size={16} />
-          <Switch checked={theme === 'dark'} onChange={toggleTheme} />
-          <Moon size={16} />
-        </ThemeToggle>
-      </Header>
-      <Grid>
-        {modules.map((module) => (
-          <TokenModule
-            key={module.id}
-            date={module.date}
-            onDelete={() => deleteModule(module.id)}
-            onUpdate={(newData) => updateModule(module.id, newData)}
-            data={module.data}
-          />
-        ))}
-      </Grid>
-      <Button onClick={addModule}>
-        <Plus size={16} /> Add New Token
-      </Button>
-    </Container>
+    <ThemeProvider theme={theme === 'light' ? lightTheme : darkTheme}>
+      <Container>
+        <Header>
+          <Title>Meme Token Investment Tracker</Title>
+          <ThemeToggle>
+            <Sun size={16} />
+            <Switch checked={theme === 'dark'} onChange={toggleTheme} />
+            <Moon size={16} />
+          </ThemeToggle>
+        </Header>
+        <Grid>
+          {modules.map((module) => (
+            <TokenModule
+              key={module.id}
+              date={module.date}
+              onDelete={() => deleteModule(module.id)}
+              onUpdate={(newData) => updateModule(module.id, newData)}
+              data={module.data}
+            />
+          ))}
+        </Grid>
+        <Button onClick={addModule}>
+          <Plus size={16} /> Add New Token
+        </Button>
+      </Container>
+    </ThemeProvider>
   );
 };
 
