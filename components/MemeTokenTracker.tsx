@@ -1,9 +1,23 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import styled, { ThemeProvider } from 'styled-components';
+import styled, { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { Plus, Trash2, Moon, Sun } from 'lucide-react';
 import { lightTheme, darkTheme } from '../theme';
+
+const GlobalStyle = createGlobalStyle`
+  body {
+    background-color: ${(props) => props.theme.backgroundColor};
+    color: ${(props) => props.theme.textColor};
+    transition: all 0.3s linear;
+  }
+`;
+
+const PageContainer = styled.div`
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+`;
 
 const Container = styled.div`
   max-width: 1200px;
