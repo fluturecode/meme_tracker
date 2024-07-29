@@ -6,6 +6,13 @@ import { Plus, Trash2, Moon, Sun } from 'lucide-react';
 import { lightTheme, darkTheme } from '../theme';
 
 const GlobalStyle = createGlobalStyle`
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+  }
+  
   body {
     background-color: ${(props) => props.theme.backgroundColor};
     color: ${(props) => props.theme.textColor};
@@ -23,8 +30,7 @@ const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  background-color: ${(props) => props.theme.backgroundColor};
-  color: ${(props) => props.theme.textColor};
+  flex-grow: 1;
 `;
 
 const Header = styled.div`
@@ -59,7 +65,6 @@ const Card = styled.div`
   border-radius: 8px;
   padding: 20px;
   background-color: ${(props) => props.theme.cardBackground};
-  color: ${(props) => props.theme.textColor};
 `;
 
 const CardTitle = styled.h2`
@@ -259,30 +264,33 @@ const MemeTokenTracker: React.FC = () => {
 
   return (
     <ThemeProvider theme={theme === 'light' ? lightTheme : darkTheme}>
-      <Container>
-        <Header>
-          <Title>Meme Token Investment Tracker</Title>
-          <ThemeToggle>
-            <Sun size={16} />
-            <Switch checked={theme === 'dark'} onChange={toggleTheme} />
-            <Moon size={16} />
-          </ThemeToggle>
-        </Header>
-        <Grid>
-          {modules.map((module) => (
-            <TokenModule
-              key={module.id}
-              date={module.date}
-              onDelete={() => deleteModule(module.id)}
-              onUpdate={(newData) => updateModule(module.id, newData)}
-              data={module.data}
-            />
-          ))}
-        </Grid>
-        <Button onClick={addModule}>
-          <Plus size={16} /> Add New Token
-        </Button>
-      </Container>
+      <GlobalStyle />
+      <PageContainer>
+        <Container>
+          <Header>
+            <Title>Meme Token Investment Tracker</Title>
+            <ThemeToggle>
+              <Sun size={16} />
+              <Switch checked={theme === 'dark'} onChange={toggleTheme} />
+              <Moon size={16} />
+            </ThemeToggle>
+          </Header>
+          <Grid>
+            {modules.map((module) => (
+              <TokenModule
+                key={module.id}
+                date={module.date}
+                onDelete={() => deleteModule(module.id)}
+                onUpdate={(newData) => updateModule(module.id, newData)}
+                data={module.data}
+              />
+            ))}
+          </Grid>
+          <Button onClick={addModule}>
+            <Plus size={16} /> Add New Token
+          </Button>
+        </Container>
+      </PageContainer>
     </ThemeProvider>
   );
 };
